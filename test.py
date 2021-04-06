@@ -70,6 +70,12 @@ class MainWindow(QtWidgets.QWidget):
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scrollArea)
 
+        self.shortcut_zoom_in = QtGui.QShortcut(QtGui.QKeySequence.ZoomIn, self)
+        self.shortcut_zoom_in.activated.connect(lambda: self.zoom_label(factor=2))
+
+        self.shortcut_zoom_in = QtGui.QShortcut(QtGui.QKeySequence.ZoomOut, self)
+        self.shortcut_zoom_in.activated.connect(lambda: self.zoom_label(factor=0.5))
+
         self.last_x = None
         self.last_y = None
 
@@ -79,7 +85,9 @@ class MainWindow(QtWidgets.QWidget):
         self.zoom_label()
         self.resize(*self.window_size)
 
-    def zoom_label(self):
+    def zoom_label(self, factor=None):
+        if factor is not None:
+            self.scale *= factor
         self.label.resize(self.img.size(2) * self.scale, self.img.size(1) * self.scale)
 
     def paint_image(self):
@@ -119,15 +127,6 @@ class MainWindow(QtWidgets.QWidget):
     def mouseReleaseEvent(self, e):
         self.last_x = None
         self.last_y = None
-
-    def keyPressEvent(self, e):
-        if e.key() == QtCore.Qt.Key_Plus or e.key() == QtCore.Qt.Key_Minus:
-            if e.key() == QtCore.Qt.Key_Plus:
-                self.scale *= 2
-            if e.key() == QtCore.Qt.Key_Minus:
-                self.scale /= 2
-
-            self.zoom_label()
 
 
 app = QtWidgets.QApplication(sys.argv)
