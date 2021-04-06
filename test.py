@@ -32,15 +32,17 @@ def torch_to_QImage(torch_image):
     torch_image = torch_image * 255
     torch_image = torch_image.clamp_(0, 255)
     torch_image = torch_image.permute(1, 2, 0)
-    numpy_image = np.ascontiguousarray(torch_image.cpu().numpy()).astype(np.uint8)
+    ones = torch.ones(torch_image.size(0), torch_image.size(1), 4) * 255
+    ones[:, :, :-1] = torch_image
+    numpy_image = np.ascontiguousarray(ones.cpu().numpy()).astype(np.uint8)
 
     height, width, channels = numpy_image.shape
     return QtGui.QImage(
         numpy_image.data,
         width,
         height,
-        numpy_image.strides[0],
-        QtGui.QImage.Format_RGB888,
+        width * channels,
+        QtGui.QImage.Format_RGB32,
     )
 
 
@@ -48,9 +50,9 @@ class MainWindow(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
 
-        self.window_size = (500, 500)
+        self.window_size = (600, 600)
 
-        self.img = torch.rand(3, 800, 800)
+        self.img = torch.rand(3, 500, 200)
         self.scale = 1
 
         self.scrollArea = QtWidgets.QScrollArea()
@@ -73,8 +75,8 @@ class MainWindow(QtWidgets.QWidget):
         self.shortcut_zoom_in = QtGui.QShortcut(QtGui.QKeySequence.ZoomIn, self)
         self.shortcut_zoom_in.activated.connect(lambda: self.zoom_label(factor=2))
 
-        self.shortcut_zoom_in = QtGui.QShortcut(QtGui.QKeySequence.ZoomOut, self)
-        self.shortcut_zoom_in.activated.connect(lambda: self.zoom_label(factor=0.5))
+        self.shortcut_zoom_out = QtGui.QShortcut(QtGui.QKeySequence.ZoomOut, self)
+        self.shortcut_zoom_out.activated.connect(lambda: self.zoom_label(factor=0.5))
 
         self.last_x = None
         self.last_y = None
@@ -92,8 +94,6 @@ class MainWindow(QtWidgets.QWidget):
 
     def paint_image(self):
         qImg = torch_to_QImage(self.img)
-        img = QImage_to_torch(qImg)
-        qImg = torch_to_QImage(img)
 
         painter = QtGui.QPainter(self.canvas)
         painter.drawImage(0, 0, qImg)
@@ -127,6 +127,19 @@ class MainWindow(QtWidgets.QWidget):
     def mouseReleaseEvent(self, e):
         self.last_x = None
         self.last_y = None
+
+        self.switch_background()
+
+    def switch_background(self):
+        print("switch")
+        current = QImage_to_torch(self.canvas.toImage())
+        mask = ~torch.isclose(current, self.img, atol=1 / 255)
+
+        new_img = torch.rand(3, 500, 200)
+        new_img[mask] = current[mask]
+        self.img = new_img
+        self.paint_image()
+        self.label.setPixmap(self.canvas)
 
 
 app = QtWidgets.QApplication(sys.argv)
