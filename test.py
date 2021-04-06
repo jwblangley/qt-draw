@@ -51,6 +51,7 @@ class MainWindow(QtWidgets.QWidget):
         self.window_size = (500, 500)
 
         self.img = torch.rand(3, 800, 800)
+        self.zoom = 2
 
         self.scrollArea = QtWidgets.QScrollArea()
         self.scrollArea.setWidgetResizable(False)
@@ -75,7 +76,7 @@ class MainWindow(QtWidgets.QWidget):
         self.paint_image()
         self.label.setPixmap(self.canvas)
 
-        self.label.resize(self.img.size(2), self.img.size(1))
+        self.label.resize(self.img.size(2) * self.zoom, self.img.size(1) * self.zoom)
         self.resize(*self.window_size)
 
     def paint_image(self):
@@ -100,10 +101,10 @@ class MainWindow(QtWidgets.QWidget):
         painter.setPen(pen)
 
         painter.drawLine(
-            self.last_x - self.label.x() - self.scrollArea.x(),
-            self.last_y - self.label.y() - self.scrollArea.y(),
-            e.x() - self.label.x() - self.scrollArea.x(),
-            e.y() - self.label.y() - self.scrollArea.y(),
+            (self.last_x - self.label.x() - self.scrollArea.x()) / self.zoom,
+            (self.last_y - self.label.y() - self.scrollArea.y()) / self.zoom,
+            (e.x() - self.label.x() - self.scrollArea.x()) / self.zoom,
+            (e.y() - self.label.y() - self.scrollArea.y()) / self.zoom,
         )
         painter.end()
 
