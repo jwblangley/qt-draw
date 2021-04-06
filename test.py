@@ -51,7 +51,7 @@ class MainWindow(QtWidgets.QWidget):
         self.window_size = (500, 500)
 
         self.img = torch.rand(3, 800, 800)
-        self.zoom = 2
+        self.scale = 1
 
         self.scrollArea = QtWidgets.QScrollArea()
         self.scrollArea.setWidgetResizable(False)
@@ -76,8 +76,11 @@ class MainWindow(QtWidgets.QWidget):
         self.paint_image()
         self.label.setPixmap(self.canvas)
 
-        self.label.resize(self.img.size(2) * self.zoom, self.img.size(1) * self.zoom)
+        self.zoom_label()
         self.resize(*self.window_size)
+
+    def zoom_label(self):
+        self.label.resize(self.img.size(2) * self.scale, self.img.size(1) * self.scale)
 
     def paint_image(self):
         qImg = torch_to_QImage(self.img)
@@ -101,10 +104,10 @@ class MainWindow(QtWidgets.QWidget):
         painter.setPen(pen)
 
         painter.drawLine(
-            (self.last_x - self.label.x() - self.scrollArea.x()) / self.zoom,
-            (self.last_y - self.label.y() - self.scrollArea.y()) / self.zoom,
-            (e.x() - self.label.x() - self.scrollArea.x()) / self.zoom,
-            (e.y() - self.label.y() - self.scrollArea.y()) / self.zoom,
+            (self.last_x - self.label.x() - self.scrollArea.x()) / self.scale,
+            (self.last_y - self.label.y() - self.scrollArea.y()) / self.scale,
+            (e.x() - self.label.x() - self.scrollArea.x()) / self.scale,
+            (e.y() - self.label.y() - self.scrollArea.y()) / self.scale,
         )
         painter.end()
 
@@ -116,6 +119,15 @@ class MainWindow(QtWidgets.QWidget):
     def mouseReleaseEvent(self, e):
         self.last_x = None
         self.last_y = None
+
+    def keyPressEvent(self, e):
+        if e.key() == QtCore.Qt.Key_Plus or e.key() == QtCore.Qt.Key_Minus:
+            if e.key() == QtCore.Qt.Key_Plus:
+                self.scale *= 2
+            if e.key() == QtCore.Qt.Key_Minus:
+                self.scale /= 2
+
+            self.zoom_label()
 
 
 app = QtWidgets.QApplication(sys.argv)
