@@ -52,7 +52,7 @@ class MainWindow(QtWidgets.QWidget):
 
         self.window_size = (600, 600)
 
-        self.img = torch.rand(3, 500, 200)
+        self.img = torch.rand(3, 400, 400)
         self.scale = 1
 
         self.scrollArea = QtWidgets.QScrollArea()
@@ -67,7 +67,8 @@ class MainWindow(QtWidgets.QWidget):
 
         self.canvas = QtGui.QPixmap(self.img.size(2), self.img.size(1))
         self.canvas.fill(QtGui.QColor("white"))
-        self.label.setPixmap(self.canvas)
+
+        self.painter = QtGui.QPainter(self.canvas)
 
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scrollArea)
@@ -82,7 +83,6 @@ class MainWindow(QtWidgets.QWidget):
         self.last_y = None
 
         self.paint_image()
-        self.label.setPixmap(self.canvas)
 
         self.zoom_label()
         self.resize(*self.window_size)
@@ -95,8 +95,8 @@ class MainWindow(QtWidgets.QWidget):
     def paint_image(self):
         qImg = torch_to_QImage(self.img)
 
-        painter = QtGui.QPainter(self.canvas)
-        painter.drawImage(0, 0, qImg)
+        self.painter.drawImage(0, 0, qImg)
+        self.label.setPixmap(self.canvas)
 
     def mouseMoveEvent(self, e):
         if self.last_x is None:
@@ -104,20 +104,18 @@ class MainWindow(QtWidgets.QWidget):
             self.last_y = e.y()
             return
 
-        painter = QtGui.QPainter(self.canvas)
-        painter.setPen(QtCore.Qt.SolidLine)
+        self.painter.setPen(QtCore.Qt.SolidLine)
 
-        pen = painter.pen()
+        pen = self.painter.pen()
         pen.setWidth(5)
-        painter.setPen(pen)
+        self.painter.setPen(pen)
 
-        painter.drawLine(
+        self.painter.drawLine(
             (self.last_x - self.label.x() - self.scrollArea.x()) / self.scale,
             (self.last_y - self.label.y() - self.scrollArea.y()) / self.scale,
             (e.x() - self.label.x() - self.scrollArea.x()) / self.scale,
             (e.y() - self.label.y() - self.scrollArea.y()) / self.scale,
         )
-        painter.end()
 
         self.label.setPixmap(self.canvas)
 
@@ -131,15 +129,13 @@ class MainWindow(QtWidgets.QWidget):
         self.switch_background()
 
     def switch_background(self):
-        print("switch")
         current = QImage_to_torch(self.canvas.toImage())
         mask = ~torch.isclose(current, self.img, atol=1 / 255)
 
-        new_img = torch.rand(3, 500, 200)
+        new_img = torch.rand(*self.img.shape)
         new_img[mask] = current[mask]
         self.img = new_img
         self.paint_image()
-        self.label.setPixmap(self.canvas)
 
 
 app = QtWidgets.QApplication(sys.argv)
