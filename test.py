@@ -82,6 +82,8 @@ class MainWindow(QtWidgets.QWidget):
         self.last_x = None
         self.last_y = None
 
+        self.mask = torch.zeros_like(self.img, dtype=torch.bool)
+
         self.paint_image()
 
         self.zoom_label()
@@ -130,10 +132,10 @@ class MainWindow(QtWidgets.QWidget):
 
     def switch_background(self):
         current = QImage_to_torch(self.canvas.toImage())
-        mask = ~torch.isclose(current, self.img, atol=1 / 255)
+        self.mask |= ~torch.isclose(current, self.img, atol=1 / 255)
 
         new_img = torch.rand(*self.img.shape)
-        new_img[mask] = current[mask]
+        new_img[self.mask] = current[self.mask]
         self.img = new_img
         self.paint_image()
 
