@@ -57,6 +57,8 @@ class MainWindow(QtWidgets.QWidget):
 
         self.scrollArea = QtWidgets.QScrollArea()
         self.scrollArea.setWidgetResizable(False)
+        self.scrollArea.setAlignment(QtCore.Qt.AlignCenter)
+        self.scrollArea.setStyleSheet("QScrollArea {background-color: #303030}")
 
         self.label = QtWidgets.QLabel()
         self.label.setSizePolicy(
@@ -70,8 +72,9 @@ class MainWindow(QtWidgets.QWidget):
 
         self.painter = QtGui.QPainter(self.canvas)
 
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.addWidget(self.scrollArea)
+        self.layout = QtWidgets.QGridLayout(self)
+        self.layout.setSpacing(10)
+        self.layout.addWidget(self.scrollArea, 0, 0)
 
         self.shortcut_zoom_in = QtGui.QShortcut(QtGui.QKeySequence.ZoomIn, self)
         self.shortcut_zoom_in.activated.connect(lambda: self.zoom_label(factor=2))
@@ -140,7 +143,7 @@ class MainWindow(QtWidgets.QWidget):
         self.paint_image()
 
 
-app = QtWidgets.QApplication(sys.argv)
+app = QtWidgets.QApplication([])
 window = MainWindow()
 window.show()
 app.exec_()
